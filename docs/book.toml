@@ -1,0 +1,6 @@
+[book]
+authors = ["haras-unicorn <github@haras-unicorn.net>"]
+language = "en"
+multilingual = false
+src = "."
+title = "Perch modules"

@@ -1,0 +1,13 @@
+# Nix
+
+# Ignore build outputs from performing a nix-build or `nix build` command
+result
+result-*
+
+# User
+
+.env
+.direnv
+docs/**/book
+mdbook-plantuml-img/
+artifacts/

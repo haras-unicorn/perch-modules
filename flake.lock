@@ -1,0 +1,63 @@
+{
+  "nodes": {
+    "nixpkgs": {
+      "locked": {
+        "lastModified": 1766333239,
+        "narHash": "sha256-F4V02oexywDhX2chetmSpxNH8zSMa7Ua68/VXzggn2A=",
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "rev": "92b27d5923e436c76675cfa9b7dc98753d8d5ad7",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nixos",
+        "ref": "release-25.11",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "nixpkgs_2": {
+      "locked": {
+        "lastModified": 1766333239,
+        "narHash": "sha256-F4V02oexywDhX2chetmSpxNH8zSMa7Ua68/VXzggn2A=",
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "rev": "92b27d5923e436c76675cfa9b7dc98753d8d5ad7",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nixos",
+        "ref": "release-25.11",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "perch": {
+      "inputs": {
+        "nixpkgs": "nixpkgs_2"
+      },
+      "locked": {
+        "lastModified": 1766331383,
+        "narHash": "sha256-9HkWU1w2U17ulNMwyYQNl5BIMTR96fOxciiutl/3X1Y=",
+        "owner": "haras-unicorn",
+        "repo": "perch",
+        "rev": "fb25d95c55b1c459260d258c4f97e2ec8ca9249d",
+        "type": "github"
+      },
+      "original": {
+        "owner": "haras-unicorn",
+        "ref": "refs/tags/1.0.3",
+        "repo": "perch",
+        "type": "github"
+      }
+    },
+    "root": {
+      "inputs": {
+        "nixpkgs": "nixpkgs",
+        "perch": "perch"
+      }
+    }
+  },
+  "root": "root",
+  "version": 7
+}
