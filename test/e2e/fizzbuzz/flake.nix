@@ -2,6 +2,7 @@
   inputs = {
     home-manager.url = "github:nix-community/home-manager?rev=fdec8815a86db36f42fc9c8cb2931cd8485f5aed";
     deploy-rs.url = "github:serokell/deploy-rs?rev=d5eff7f948535b9c723d60cd8239f8f11ddc90fa";
+    rumor.url = "github:haras-unicorn/rumor?rev=f945357feec3b6cb9caf12ca8084606e8396c706";
   };
 
   outputs =
@@ -10,6 +11,7 @@
       perch-modules,
       home-manager,
       deploy-rs,
+      rumor,
       ...
     }@inputs:
     perch.lib.flake.make {
@@ -97,6 +99,7 @@
               self.nixosModules.default
               home-manager.nixosModules.default
               perch-modules.nixosModules."flake-deployRs"
+              perch-modules.nixosModules."flake-rumor"
             ];
             fileSystems."/" = {
               device = "/dev/disk/by-label/NIXROOT";
@@ -106,6 +109,15 @@
               hostname = "example.com";
               sshUser = "haras";
             };
+            rumor.specification.generations = [
+              {
+                generator = "text";
+                arguments = {
+                  name = "secret";
+                  text = "hello :)";
+                };
+              }
+            ];
             boot.loader.grub.device = "nodev";
             programs.fizzbuzz.enable = true;
             users.users.haras.isNormalUser = true;

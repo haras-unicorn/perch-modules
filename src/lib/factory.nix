@@ -105,7 +105,6 @@
     {
       specialArgs,
       config,
-      ...
     }:
     let
       deploy-rs = if specialArgs ? deploy-rs then specialArgs.deploy-rs else null;
@@ -188,5 +187,171 @@
       config.flake.deploy.nodes = nixosConfigurationDeployNodes;
 
       config.flake.checks = deployChecks;
+    };
+
+  flake.lib.factory.rumorModule =
+    {
+      config,
+      specialArgs,
+    }:
+
+    let
+      rumor = if specialArgs ? rumor then specialArgs.rumor else null;
+
+      importsOption = lib.mkOption {
+        type = lib.types.listOf lib.types.raw;
+        default = [ ];
+        description = lib.literalMD ''
+          Rumor `imports` specification value.
+        '';
+      };
+
+      generationsOption = lib.mkOption {
+        type = lib.types.listOf lib.types.raw;
+        default = [ ];
+        description = lib.literalMD ''
+          Rumor `generations` specification value.
+        '';
+      };
+
+      exportsOption = lib.mkOption {
+        type = lib.types.listOf lib.types.raw;
+        default = [ ];
+        description = lib.literalMD ''
+          Rumor `exports` specification value.
+        '';
+      };
+
+      sopsOption = lib.mkOption {
+        type = lib.types.listOf lib.types.str;
+        default = [ ];
+        description = lib.literalMD ''
+          Which files to include in the sops file.
+        '';
+      };
+
+      specificationSubmodule.options = {
+        imports = importsOption;
+        generations = generationsOption;
+        exports = exportsOption;
+      };
+
+      rumorSubmodule.options = {
+        specification = {
+          imports = importsOption;
+          generations = generationsOption;
+          exports = exportsOption;
+        };
+        sops = sopsOption;
+      };
+
+      nixosConfigurationsAsRumor =
+        if rumor == null then
+          { }
+        else if !config.nixosConfigurationsAsRumor then
+          { }
+        else
+          builtins.mapAttrs
+            (name: conf: {
+              imports = conf.config.rumor.specification.imports;
+              generations = conf.config.rumor.specification.generations ++ [
+                {
+                  generator = "age";
+                  arguments = {
+                    private = "age-private";
+                    public = "age-public";
+                  };
+                }
+                {
+                  generator = "sops";
+                  arguments = {
+                    renew = true;
+                    age = "age-public";
+                    private = "sops-private";
+                    public = "sops-public";
+                    secrets = builtins.listToAttrs (
+                      builtins.map (file: {
+                        name = file;
+                        value = file;
+                      }) conf.config.rumor.sops
+                    );
+                  };
+                }
+              ];
+              exports = conf.config.rumor.specification.exports ++ [
+                {
+                  exporter = "copy";
+                  arguments = {
+                    from = "sops-public";
+                    to = "${config.rumor.sopsDir}/${name}.yaml";
+                  };
+                }
+              ];
+            })
+            (
+              lib.filterAttrs (
+                _: conf: conf.config ? rumor && conf.config.rumor != null
+              ) config.flake.nixosConfigurations
+            );
+
+      # TODO: pkgs.runCommand with rumor validate
+      rumorChecks =
+        if rumor == null then
+          { }
+        else
+          builtins.listToAttrs (
+            builtins.map (system: {
+              name = system;
+              value = { };
+            }) perch.lib.defaults.systems
+          );
+    in
+    {
+      config.nixosModule = {
+        options.rumor = lib.mkOption {
+          type = lib.types.nullOr (lib.types.submodule rumorSubmodule);
+          default = null;
+        };
+      };
+
+      options.rumor.sopsDir = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = null;
+        description = lib.literalMD ''
+          Where to put the sops file.
+        '';
+      };
+      options.nixosConfigurationsAsRumor = lib.mkOption {
+        type = lib.types.bool;
+        default = true;
+        description = lib.literalMD ''
+          Convert all nixos configurations to rumor.
+        '';
+      };
+      config.eval.privateConfig = [
+        [
+          "rumor"
+          "sopsDir"
+        ]
+        [ "nixosConfigurationsAsRumor" ]
+      ];
+
+      options.flake.rumor = lib.mkOption {
+        type = lib.types.attrsOf (lib.types.submodule specificationSubmodule);
+        default = { };
+        description = lib.literalMD ''
+          Rumor specifications.
+        '';
+      };
+      config.eval.publicConfig = [
+        [
+          "flake"
+          "rumor"
+        ]
+      ];
+
+      config.flake.rumor = nixosConfigurationsAsRumor;
+
+      config.flake.checks = rumorChecks;
     };
 }

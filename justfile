@@ -7,6 +7,7 @@ perch-modules := root
 nixpkgs := shell('"github:nixos/nixpkgs?rev=" + (open flake.lock | from json | get nodes.nixpkgs.locked.rev)')
 home-manager := "github:nix-community/home-manager?rev=fdec8815a86db36f42fc9c8cb2931cd8485f5aed"
 deploy-rs := "github:serokell/deploy-rs?rev=d5eff7f948535b9c723d60cd8239f8f11ddc90fa"
+rumor := "github:haras-unicorn/rumor?rev=f945357feec3b6cb9caf12ca8084606e8396c706"
 
 default:
     @just --choose
@@ -27,6 +28,7 @@ lint:
       --quiet \
       ...(fd '.*.md' | lines)
     nix flake check --all-systems
+    @just test-unit
 
 test-e2e-all *args:
     #!/usr/bin/env nu
@@ -61,6 +63,7 @@ test-unit filter="":
       --override-flake nixpkgs "{{ nixpkgs }}"
       --override-flake home-manager "{{ home-manager }}"
       --override-flake deploy-rs "{{ deploy-rs }}"
+      --override-flake rumor "{{ rumor }}"
       --expr
       '(builtins.getFlake "{{ root }}/test/unit").test {
         root = "{{ root }}";

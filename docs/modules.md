@@ -97,6 +97,30 @@ module. The module defines:
   }
   ```
 
+- a `rumor` `flake` output to be used with `rumor` along with checks for the
+  `rumor` flake output schema
+
+  ```nix
+  {
+    rumor = {
+      "fizzbuzz-${system}" = {
+        generations = [{
+          generator = "text";
+          arguments = {
+            name = "secret";
+            text = "hello :)";
+          };
+        }];
+      };
+    };
+    checks = {
+      ${system} = {
+        rumor-fizzbuzz-${system}-schema = "<<derivation>>";
+      };
+    };
+  }
+  ```
+
 ## Special arguments
 
 - `nixosModule` - in the NixOS module test evaluation context, it will be set to
@@ -125,3 +149,14 @@ module. The module defines:
 - `nixosModuleTest`: `raw` - the NixOS module test for this module
 - `nixosModuleTestNixpkgs`: `nixpkgs config` - the `nixpkgs` configuration for
   this NixOS module test `pkgs`
+
+### Rumor
+
+- `rumor.sopsDir`: `nullOr str` = `null` - where to copy the resulting sops file
+  to be used with `sops-nix`
+- `nixosConfigurationsAsRumor`: `bool` = `true` - converts all NixOS
+  configurations with `rumor` configuration into `rumor` specifications
+
+  `perch-modules` provides a NixOS module
+  `perch-modules.nixosModules."flake-rumor"` which you can use to define a
+  `rumor` specification in your NixOS configuration
