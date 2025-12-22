@@ -10,6 +10,7 @@
       perch,
       deploy-rs,
       home-manager,
+      rumor,
       ...
     }:
     {
@@ -28,6 +29,7 @@
               perch
               deploy-rs
               home-manager
+              rumor
               ;
             self.lib = flake.lib;
           };

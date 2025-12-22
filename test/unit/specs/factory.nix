@@ -5,6 +5,7 @@
   nixpkgs,
   home-manager,
   deploy-rs,
+  rumor,
   ...
 }:
 
@@ -14,18 +15,15 @@ let
 
   homeManagerModule =
     { specialArgs, flakeModules, ... }:
-    if specialArgs ? home-manager then
-      perch.lib.factory.submoduleModule {
-        inherit
-          specialArgs
-          flakeModules
-          superConfig
-          superOptions
-          ;
-        config = "homeManagerModule";
-      }
-    else
-      { };
+    perch.lib.factory.submoduleModule {
+      inherit
+        specialArgs
+        flakeModules
+        superConfig
+        superOptions
+        ;
+      config = "homeManagerModule";
+    };
 
   deployRsModule =
     {
@@ -33,12 +31,19 @@ let
       config,
       ...
     }:
-    if specialArgs ? deploy-rs then
-      self.lib.factory.deployRsModule {
-        inherit config specialArgs;
-      }
-    else
-      { };
+    self.lib.factory.deployRsModule {
+      inherit config specialArgs;
+    };
+
+  rumorModule =
+    {
+      specialArgs,
+      config,
+      ...
+    }:
+    self.lib.factory.rumorModule {
+      inherit config specialArgs;
+    };
 
   nixosModuleTestModule =
     {
@@ -62,6 +67,7 @@ let
         nixpkgs
         home-manager
         deploy-rs
+        rumor
         ;
       input = perch.lib.flake.make {
         inputs = {
@@ -70,10 +76,16 @@ let
             nixpkgs
             home-manager
             deploy-rs
+            rumor
             ;
         };
         selfModules = {
-          inherit homeManagerModule deployRsModule nixosModuleTestModule;
+          inherit
+            homeManagerModule
+            deployRsModule
+            rumorModule
+            nixosModuleTestModule
+            ;
         };
       };
     };
@@ -110,7 +122,7 @@ let
             '';
           };
         };
-      deployModule =
+      configurationModule =
         { input, ... }:
         {
           defaultNixosConfiguration = true;
@@ -118,11 +130,21 @@ let
           nixosConfiguration = {
             imports = [
               input.nixosModules.deployRsModule
+              input.nixosModules.rumorModule
             ];
             deploy.node = {
               hostname = "example.com";
               sshUser = "haras";
             };
+            rumor.specification.generations = [
+              {
+                generator = "text";
+                arguments = {
+                  name = "secret";
+                  text = "hello :)";
+                };
+              }
+            ];
             fileSystems."/" = {
               device = "/dev/disk/by-label/nix-root";
               fsType = "ext4";
@@ -154,4 +176,8 @@ in
 
   factory_nixos_module_tests_correct =
     flakeResult.checks.x86_64-linux.nixosModule-test.type == "derivation";
+
+  factory_rumor_correct =
+    (builtins.head flakeResult.rumor.configurationModule-x86_64-linux.generations).arguments.text
+    == "hello :)";
 }
