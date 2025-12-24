@@ -105,10 +105,39 @@ module. The module defines:
     rumor = {
       "fizzbuzz-${system}" = {
         generations = [{
-          generator = "text";
+          {
+            generator = "text";
+            arguments = {
+              name = "secret";
+              text = "hello :)";
+            };
+          }
+
+          {
+            generator = "age";
+            arguments = {
+              private = "age-private";
+              public = "age-public";
+            };
+          }
+          {
+            generator = "sops";
+            arguments = {
+              renew = true;
+              age = "age-public";
+              private = "sops-private";
+              public = "sops-public";
+              secrets = {
+                "test" = "test"
+              };
+            };
+          }
+        ];
+        exports = [{
+          exporter = "copy";
           arguments = {
-            name = "secret";
-            text = "hello :)";
+            from = "sops-public";
+            to = "../sops.yaml";
           };
         }];
       };
@@ -120,6 +149,8 @@ module. The module defines:
     };
   }
   ```
+
+  The generated age key and sops file are here to ease use with sops-nix
 
 ## Special arguments
 
@@ -152,8 +183,6 @@ module. The module defines:
 
 ### Rumor
 
-- `rumor.sopsDir`: `nullOr str` = `null` - where to copy the resulting sops file
-  to be used with `sops-nix`
 - `nixosConfigurationsAsRumor`: `bool` = `true` - converts all NixOS
   configurations with `rumor` configuration into `rumor` specifications
 
