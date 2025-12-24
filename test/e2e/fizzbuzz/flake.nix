@@ -109,6 +109,8 @@
               hostname = "example.com";
               sshUser = "haras";
             };
+            rumor.sops.keys = [ "secret" ];
+            rumor.sops.path = "../sops.yaml";
             rumor.specification.generations = [
               {
                 generator = "text";

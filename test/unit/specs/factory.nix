@@ -136,6 +136,8 @@ let
               hostname = "example.com";
               sshUser = "haras";
             };
+            rumor.sops.keys = [ "secret" ];
+            rumor.sops.path = "../sops.yaml";
             rumor.specification.generations = [
               {
                 generator = "text";
@@ -180,4 +182,16 @@ in
   factory_rumor_correct =
     (builtins.head flakeResult.rumor.configurationModule-x86_64-linux.generations).arguments.text
     == "hello :)";
+
+  factory_rumor_sops_correct =
+    (builtins.elemAt flakeResult.rumor.configurationModule-x86_64-linux.generations 1).generator
+    == "age"
+    &&
+      (builtins.elemAt flakeResult.rumor.configurationModule-x86_64-linux.generations 2).generator
+      == "sops"
+    &&
+      (builtins.elemAt flakeResult.rumor.configurationModule-x86_64-linux.generations 2).arguments.secrets
+      == {
+        secret = "secret";
+      };
 }

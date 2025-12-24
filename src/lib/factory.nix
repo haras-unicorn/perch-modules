@@ -222,11 +222,19 @@
         '';
       };
 
-      sopsOption = lib.mkOption {
+      sopsKeysOption = lib.mkOption {
         type = lib.types.listOf lib.types.str;
         default = [ ];
         description = lib.literalMD ''
           Which files to include in the sops file.
+        '';
+      };
+
+      sopsPathOption = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = null;
+        description = lib.literalMD ''
+          Where to put the sops file.
         '';
       };
 
@@ -242,7 +250,10 @@
           generations = generationsOption;
           exports = exportsOption;
         };
-        sops = sopsOption;
+        sops = {
+          keys = sopsKeysOption;
+          path = sopsPathOption;
+        };
       };
 
       nixosConfigurationsAsRumor =
@@ -254,39 +265,46 @@
           builtins.mapAttrs
             (name: conf: {
               imports = conf.config.rumor.specification.imports;
-              generations = conf.config.rumor.specification.generations ++ [
-                {
-                  generator = "age";
-                  arguments = {
-                    private = "age-private";
-                    public = "age-public";
-                  };
-                }
-                {
-                  generator = "sops";
-                  arguments = {
-                    renew = true;
-                    age = "age-public";
-                    private = "sops-private";
-                    public = "sops-public";
-                    secrets = builtins.listToAttrs (
-                      builtins.map (file: {
-                        name = file;
-                        value = file;
-                      }) conf.config.rumor.sops
-                    );
-                  };
-                }
-              ];
-              exports = conf.config.rumor.specification.exports ++ [
-                {
-                  exporter = "copy";
-                  arguments = {
-                    from = "sops-public";
-                    to = "${config.rumor.sopsDir}/${name}.yaml";
-                  };
-                }
-              ];
+              generations =
+                conf.config.rumor.specification.generations
+                ++ (lib.optionals ((builtins.length conf.config.rumor.sops.keys) != 0) [
+                  {
+                    generator = "age";
+                    arguments = {
+                      private = "age-private";
+                      public = "age-public";
+                    };
+                  }
+                  {
+                    generator = "sops";
+                    arguments = {
+                      renew = true;
+                      age = "age-public";
+                      private = "sops-private";
+                      public = "sops-public";
+                      secrets = builtins.listToAttrs (
+                        builtins.map (file: {
+                          name = file;
+                          value = file;
+                        }) conf.config.rumor.sops.keys
+                      );
+                    };
+                  }
+                ]);
+              exports =
+                conf.config.rumor.specification.exports
+                ++ (lib.optionals
+                  ((builtins.length conf.config.rumor.sops.keys) != 0 && conf.config.rumor.sops.path != null)
+                  [
+                    {
+                      exporter = "copy";
+                      arguments = {
+                        from = "sops-public";
+                        to = conf.config.rumor.sops.path;
+                      };
+                    }
+                  ]
+                );
             })
             (
               lib.filterAttrs (
@@ -329,10 +347,6 @@
         '';
       };
       config.eval.privateConfig = [
-        [
-          "rumor"
-          "sopsDir"
-        ]
         [ "nixosConfigurationsAsRumor" ]
       ];
 
