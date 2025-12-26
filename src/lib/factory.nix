@@ -269,7 +269,7 @@
                 conf.config.rumor.specification.generations
                 ++ (lib.optionals ((builtins.length conf.config.rumor.sops.keys) != 0) [
                   {
-                    generator = "age";
+                    generator = "age-key";
                     arguments = {
                       private = "age-private";
                       public = "age-public";
