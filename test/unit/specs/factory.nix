@@ -185,7 +185,7 @@ in
 
   factory_rumor_sops_correct =
     (builtins.elemAt flakeResult.rumor.configurationModule-x86_64-linux.generations 1).generator
-    == "age"
+    == "age-key"
     &&
       (builtins.elemAt flakeResult.rumor.configurationModule-x86_64-linux.generations 2).generator
       == "sops"
