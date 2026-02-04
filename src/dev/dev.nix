@@ -35,7 +35,7 @@
         nodePackages.yaml-language-server
         taplo
       ]
-      ++ (lib.optionals pkgs.hostPlatform.is64bit [
+      ++ (lib.optionals pkgs.stdenv.hostPlatform.is64bit [
         marksman
       ])
       ++ [
